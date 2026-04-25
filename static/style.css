@@ -1,0 +1,104 @@
+body {
+    background-color: #e9ecef;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.chat-container {
+    width: 400px;
+    height: 600px;
+    background: #ffffff;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-header {
+    background: #007bff;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.chat-box {
+    background-image: url('bg.jpg');
+    background-size: cover;
+    background-position: center;
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.msg {
+    padding: 12px 18px;
+    font-size: 15px;
+    max-width: 70%;
+    word-wrap: break-word;
+    animation: fadeIn 0.3s ease;
+    font-weight: 500;
+}
+
+.sent {
+    background-color: #ffffff;
+    color: #6d5b4b;
+    align-self: flex-end;
+    border: 2px dashed #c4a482;
+    border-radius: 25px 25px 5px 25px;
+}
+
+.received {
+    background-color: #fff9e6;
+    color: #333;
+    align-self: flex-start;
+    border-top: 3px solid #ff6b9d;
+    border-right: 3px solid #ff6b9d;
+    border-left: 2px solid transparent;
+    border-bottom: 2px solid transparent;
+    border-radius: 25px 25px 25px 5px;
+    box-shadow: -4px 4px 0px #4dabf7;
+    margin-left: 5px;
+}
+
+.input-area {
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid #eee;
+    background: #ffffff;
+    z-index: 10;
+}
+
+input {
+    flex: 1;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 20px;
+    outline: none;
+    background: #f8f9fa;
+}
+
+button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

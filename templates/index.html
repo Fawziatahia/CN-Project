@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <title>Minimal Chat</title>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h3>Messaging Room</h3>
+        </div>
+        <div id="chat-box" class="chat-box">
+        </div>
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+
+        function sendMessage() {
+            let input = document.getElementById('messageInput');
+            let text = input.value.trim();
+            
+            if(text !== "") {
+                let box = document.getElementById('chat-box');
+                box.innerHTML += `<div class="msg sent">${text}</div>`;
+                box.scrollTop = box.scrollHeight;
+
+                socket.emit('send_message', { msg: text });
+                input.value = "";
+            }
+        }
+
+        socket.on('receive_message', function(data) {
+            let box = document.getElementById('chat-box');
+            box.innerHTML += `<div class="msg received">${data.msg}</div>`;
+            box.scrollTop = box.scrollHeight;
+        });
+
+        document.getElementById("messageInput").addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
