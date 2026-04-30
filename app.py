@@ -164,6 +164,10 @@ def handle_message(data):
     time = data.get('time')
     date = data.get('date')
 
+    if not recipient:
+        emit('receive_message', {'msg': 'Select a conversation first.', 'type': 'system'}, to=request.sid)
+        return
+
     conn = sqlite3.connect('chat.db')
     c = conn.cursor()
     c.execute("INSERT INTO messages (sender, recipient, message, timestamp, date, status) VALUES (?, ?, ?, ?, ?, 'sent')",
@@ -219,6 +223,9 @@ def handle_delete_chat(data):
     conn.close()
 
     emit('chat_deleted', {'success': True}, to=request.sid)
+
+    if user2 in routing_table:
+        emit('chat_deleted_remote', {'deleted_by': user1}, to=routing_table[user2])
 
 @socketio.on('clear_unread')
 def handle_clear_unread(data):

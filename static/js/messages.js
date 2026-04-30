@@ -1,5 +1,7 @@
 function sendMessage() {
     const input = document.getElementById('messageInput');
+    if (input.disabled) return;
+
     const text = input.value.trim();
     const myName = getMyName();
 

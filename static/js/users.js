@@ -173,3 +173,10 @@ App.socket.on('chat_deleted', function(data) {
         App.socket.emit('get_unread_counts', { myName: getMyName() });
     }
 });
+
+App.socket.on('chat_deleted_remote', function(data) {
+    if (App.currentRecipient === data.deleted_by) {
+        closeChat();
+    }
+    App.socket.emit('get_unread_counts', { myName: getMyName() });
+});
