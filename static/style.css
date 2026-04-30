@@ -25,11 +25,23 @@ body {
     padding: 15px;
     text-align: center;
     z-index: 10;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.routing-bar {
+    padding: 10px;
+    background: #fff;
+    display: flex;
+    gap: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.routing-bar input {
+    padding: 5px 10px;
 }
 
 .chat-box {
-    background-image: url('bg.jpg');
+    background-color: #fcfcfc;
+    background-image: url('bg.jpg'); /* Make sure bg.jpg is in your static folder! */
     background-size: cover;
     background-position: center;
     flex: 1;
@@ -70,22 +82,47 @@ body {
     margin-left: 5px;
 }
 
+.timestamp {
+    display: block;
+    font-size: 11px;
+    text-align: right;
+    margin-top: 6px;
+    opacity: 0.6;
+    color: #555;
+}
+
+/*  System Notification Styling  */
+.system-notification {
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 5px 15px;
+    border-radius: 20px;
+    align-self: center; 
+    margin: 5px auto; 
+    width: fit-content;
+    animation: fadeIn 0.3s ease;
+}
+
 .input-area {
     padding: 15px;
     display: flex;
     gap: 10px;
     border-top: 1px solid #eee;
     background: #ffffff;
-    z-index: 10;
 }
 
 input {
     flex: 1;
     border: 1px solid #ddd;
-    padding: 10px;
     border-radius: 20px;
     outline: none;
     background: #f8f9fa;
+}
+
+#messageInput {
+    padding: 10px;
 }
 
 button {
@@ -102,3 +139,21 @@ button {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* --- NEW: Typing Indicator Styling --- */
+.typing-indicator {
+    font-size: 12px;
+    color: #888;
+    font-style: italic;
+    padding: 0 20px 5px 20px;
+    background: #fff;
+    display: none; /* Hidden by default */
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
