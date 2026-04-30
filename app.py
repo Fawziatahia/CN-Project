@@ -31,6 +31,22 @@ def init_db():
 
 init_db()
 
+def migrate_db():
+    conn = sqlite3.connect('chat.db')
+    c = conn.cursor()
+    try:
+        c.execute("ALTER TABLE messages ADD COLUMN date TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE messages ADD COLUMN status TEXT DEFAULT 'sent'")
+    except sqlite3.OperationalError:
+        pass
+    conn.commit()
+    conn.close()
+
+migrate_db()
+
 def get_all_users():
     global cached_all_users, cache_timestamp
     now = time.time()
@@ -58,7 +74,7 @@ def cleanup_stale_users():
             del routing_table[username]
             del user_presence[username]
             for known_user, known_sid in routing_table.items():
-                emit('receive_message', {'msg': f'{username} left the chat', 'type': 'system'}, to=known_sid)
+                socketio.emit('receive_message', {'msg': f'{username} left the chat', 'type': 'system'}, to=known_sid)
             broadcast_users()
     threading.Timer(5, cleanup_stale_users).start()
 
@@ -124,7 +140,7 @@ def handle_heartbeat(data):
             broadcast_users()
 
 @socketio.on('disconnect')
-def handle_disconnect():
+def handle_disconnect(reason=None):
     disconnected_user = None
     for username, sid in list(routing_table.items()):
         if sid == request.sid:
@@ -135,7 +151,7 @@ def handle_disconnect():
             break
 
     if disconnected_user:
-        for known_user, known_sid in routing_table.items():
+        for known_user, known_sid in list(routing_table.items()):
             emit('receive_message', {'msg': f'{disconnected_user} left the chat', 'type': 'system'}, to=known_sid)
 
         broadcast_users()
