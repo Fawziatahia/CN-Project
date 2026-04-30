@@ -33,9 +33,31 @@ No passwords, no signup — pick a display name and start chatting.
 
 ---
 
+## Preview
+
+![Login Screen](images/image_0.png)
+*Simple, frictionless login — just pick a display name.*
+
+![Privacy Policy](images/image_1.png)
+*Clear, accessible privacy policy and data usage information.*
+
+![Empty Chat State](images/image_2.png)
+*Clean glassmorphic interface with online/offline user presence.*
+
+![Chat & Emojis](images/image_3.png)
+*Real-time messaging featuring read receipts, timestamps, and an emoji picker.*
+
+![Unread Notifications](images/image_4.png)
+*Background unread message badges to keep you updated.*
+
+![Chat Management](images/image_5.png)
+*Context menus for easy conversation management.*
+
+---
+
 ## Project structure
 
-```
+```text
 CN-Project/
 ├── app.py                       # Flask app + SocketIO handlers + routes
 ├── chat.db                      # SQLite database (auto-created)
@@ -56,107 +78,3 @@ CN-Project/
     └── partials/
         ├── sidebar.html         # User list + bottom user panel
         └── chat.html            # Header + messages + input + emoji
-```
-
----
-
-## Routes
-
-| Method | Path      | Description                                      |
-| ------ | --------- | ------------------------------------------------ |
-| GET    | `/`       | Redirects to `/chat` if logged in, else `/login` |
-| GET    | `/login`  | Renders the name-picker card                     |
-| POST   | `/login`  | Saves the name to `session`, redirects to `/chat`|
-| GET    | `/chat`   | The chat app (redirects to `/login` if no name)  |
-| GET    | `/logout` | Clears the session                               |
-
----
-
-## Socket.IO events
-
-**Client → Server**
-| Event          | Payload                                              |
-| -------------- | ---------------------------------------------------- |
-| `register`     | `username` (string)                                  |
-| `send_message` | `{ from, to, msg, time, date }`                      |
-| `get_history`  | `{ me, them }`                                       |
-| `mark_read`    | `{ sender, recipient }`                              |
-| `typing`       | `{ from, to }`                                       |
-| `stop_typing`  | `{ to }`                                             |
-
-**Server → Client**
-| Event             | Payload                                              |
-| ----------------- | ---------------------------------------------------- |
-| `update_users`    | `{ online: [...], offline: [...] }`                  |
-| `receive_message` | `{ msg, type, sender?, timestamp?, date? }`          |
-| `load_history`    | `{ history: [[sender, msg, time, status, date]...] }`|
-| `messages_read`   | `{ reader }`                                         |
-| `is_typing`       | `{ sender }`                                         |
-| `stopped_typing`  | —                                                    |
-
----
-
-## Database schema
-
-```sql
-CREATE TABLE messages (
-    id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    sender    TEXT,
-    recipient TEXT,
-    message   TEXT,
-    timestamp TEXT,
-    date      TEXT,
-    status    TEXT DEFAULT 'sent'   -- 'sent' | 'read'
-);
-
-CREATE TABLE users (
-    username TEXT PRIMARY KEY
-);
-```
-
----
-
-## Setup & run
-
-### 1. Install dependencies
-
-```bash
-pip install flask flask-socketio
-```
-
-### 2. Run the server
-
-```bash
-python app.py
-```
-
-The app starts on `http://0.0.0.0:5000`.
-
-### 3. Open in two browsers
-
-Open two browser windows (or two devices on the same network) and visit:
-
-```
-http://127.0.0.1:5000/login
-```
-
-Pick a different name in each, and you'll see each other in the sidebar. Click a user to start a DM.
-
----
-
-## Test it on a LAN
-
-The server binds to `0.0.0.0`, so any device on the same Wi-Fi can reach it via your machine's local IP, e.g. `http://192.168.1.42:5000/login`.
-
-Find your LAN IP:
-
-- Windows: `ipconfig`
-- macOS / Linux: `ifconfig` or `ip addr`
-
----
-
-## Notes
-
-- This is a learning / demo project — no real authentication, no message encryption, no password reset, etc. Don't expose `chat.db` or the server to the public internet.
-- The Flask `secret_key` in `app.py` is hard-coded for development. Change it for any non-toy deployment.
-- The `chat.db` file is created automatically on first run.
