@@ -1,294 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Unicast Chat</title>
-</head>
 
-<head>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <!-- ADD THIS LINE FOR ICONS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-    <title>Unicast Chat</title>
 </head>
-
 <body>
-    <div class="chat-container">
-        
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <input type="text" id="myName" placeholder="Register your name..." onblur="registerUser()" class="register-input">
-            </div>
-            <div id="userList" class="user-list">
-                <div class="user-item" style="justify-content: center; color: #888;">Waiting to connect...</div>
-            </div>
-        </div>
 
-        <div class="main-chat">
-            <div class="chat-header" style="display: flex; align-items: center;">
-                <!-- NEW: Hidden avatar that will show up when a chat is opened -->
-                <div id="headerAvatar" class="avatar" style="display: none; margin-right: 15px; width: 40px; height: 40px;"></div>
-                <h3 id="activeChatName" style="margin: 0; text-transform: capitalize;">Select a chat to start messaging</h3>
-            </div>
-
-            <div id="chat-box" class="chat-box"></div>
-
-            <div id="typingIndicator" class="typing-indicator"></div>
-            
-            <div class="input-area">
-                <input type="text" id="messageInput" placeholder="Type a message...">
-                <button onclick="sendMessage()">Send</button>
-            </div>
-        </div>
-
+    <!-- Animated background blobs -->
+    <div class="bg-orbs" aria-hidden="true">
+        <span class="orb orb-1"></span>
+        <span class="orb orb-2"></span>
+        <span class="orb orb-3"></span>
+        <span class="orb orb-4"></span>
     </div>
 
-    <script>
-        const socket = io();
-        let typingTimeout = null;
-        let currentRecipient = "";
-        let currentChatDate = ""; 
+    <div class="chat-container glass">
+        {% include 'partials/sidebar.html' %}
+        {% include 'partials/chat.html' %}
+    </div>
 
-        const checkmarkSVG = `<svg viewBox="0 0 16 15" width="16" height="15" style="vertical-align: -2px;"><path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.32.32 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z" fill="currentColor"/></svg>`;
-
-
-        function getTimeString() {
-            const now = new Date();
-            let hours = now.getHours();
-            let minutes = now.getMinutes();
-            let ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12; 
-            minutes = minutes < 10 ? '0' + minutes : minutes; 
-            return hours + ':' + minutes + ' ' + ampm;
-        }
-
-        // NEW: Generates a beautiful date string like "Oct 24, 2023"
-        function getDateString() {
-            const now = new Date();
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            return now.toLocaleDateString('en-US', options); 
-        }
-
-        function registerUser() {
-            let myName = document.getElementById('myName').value.trim();
-            if(myName !== "") {
-                socket.emit('register', myName);
-                document.getElementById('myName').disabled = true; 
-                document.getElementById('myName').style.backgroundColor = "#e9ecef";
-            }
-        }
-
-        function openChat(userName) {
-            currentRecipient = userName; 
-            currentChatDate = ""; // Reset the date tracker when opening a new chat
-            // NEW: Show the avatar and set just the name
-            let initial = userName.charAt(0).toUpperCase();
-            let headerAvatar = document.getElementById('headerAvatar');
-            headerAvatar.innerText = initial;
-            headerAvatar.style.display = "flex"; // Make the avatar visible
-            document.getElementById('activeChatName').innerText = userName; // Only show the name
-            
-            document.getElementById('chat-box').innerHTML = `
-                <div class="system-notification">Loading secure chat with ${userName}...</div>
-            `;
-            
-            let myName = document.getElementById('myName').value.trim();
-            socket.emit('get_history', { me: myName, them: userName });
-            socket.emit('mark_read', { sender: userName, recipient: myName });
-        }
-
-        socket.on('load_history', function(data) {
-            let box = document.getElementById('chat-box');
-            box.innerHTML = ''; 
-            let myName = document.getElementById('myName').value.trim();
-
-            if (data.history.length === 0) {
-                box.innerHTML = `<div class="system-notification">This is the start of your chat history.</div>`;
-                return;
-            }
-
-            data.history.forEach(row => {
-                let sender = row[0];
-                let msg = row[1];
-                let time = row[2];
-                let status = row[3]; 
-                let date = row[4] || getDateString(); // Get the DB date
-
-                // NEW: Draw a date separator if the day changed!
-                if (date !== currentChatDate) {
-                    let displayDate = (date === getDateString()) ? "Today" : date;
-                    box.innerHTML += `<div class="date-divider">${displayDate}</div>`;
-                    currentChatDate = date; // Update tracker
-                }
-
-                if (sender === myName) {
-                    let tickClass = status === 'read' ? 'ticks-read' : 'ticks-sent';
-                    box.innerHTML += `
-                        <div class="message-group my-message">
-                            <div class="msg sent">${msg}</div>
-                            <span class="timestamp-out">${time} <span class="read-ticks ${tickClass}">${checkmarkSVG}</span></span>
-                        </div>`;
-                } else {
-                    box.innerHTML += `
-                        <div class="message-group their-message">
-                            <div class="msg received">${msg}</div>
-                            <span class="timestamp-out">${time}</span>
-                        </div>`;
-                }
-            });
-            box.scrollTop = box.scrollHeight;
-        });
-
-        socket.on('update_users', function(data) {
-            let userListDiv = document.getElementById('userList');
-            userListDiv.innerHTML = ''; 
-            let myName = document.getElementById('myName').value.trim();
-            let hasOtherUsers = false;
-            
-            if (data.online.length > 0) {
-                data.online.forEach(user => {
-                    if (user !== myName) { 
-                        hasOtherUsers = true;
-                        let initial = user.charAt(0).toUpperCase();
-                        userListDiv.innerHTML += `
-                            <div class="user-item" onclick="openChat('${user}')">
-                                <div class="avatar">${initial}</div>
-                                <div class="user-info">
-                                    <div class="user-name">${user}</div>
-                                    <div class="user-status">Online</div>
-                                </div>
-                                <span class="online-dot" style="background: #25D366;"></span>
-                            </div>`;
-                    }
-                });
-            }
-
-            if (data.offline.length > 0) {
-                data.offline.forEach(user => {
-                    if (user !== myName) { 
-                        hasOtherUsers = true;
-                        let initial = user.charAt(0).toUpperCase();
-                        userListDiv.innerHTML += `
-                            <div class="user-item" onclick="openChat('${user}')">
-                                <div class="avatar">${initial}</div>
-                                <div class="user-info">
-                                    <div class="user-name">${user}</div>
-                                    <div class="user-status">Offline</div>
-                                </div>
-                                <span class="online-dot" style="background: #dc3545;"></span>
-                            </div>`;
-                    }
-                });
-            }
-
-            if (!hasOtherUsers) {
-                userListDiv.innerHTML = '<div class="user-item" style="justify-content: center; color: #888;">Just you on the server</div>';
-            }
-        });
-
-        function sendMessage() {
-            let input = document.getElementById('messageInput');
-            let text = input.value.trim();
-            let myName = document.getElementById('myName').value.trim();
-            
-            if(text !== "" && currentRecipient !== "") {
-                let box = document.getElementById('chat-box');
-                let time = getTimeString(); 
-                let date = getDateString(); // Get today's date
-
-                // NEW: If sending a message on a new day, draw the separator
-                if (date !== currentChatDate) {
-                    box.innerHTML += `<div class="date-divider">Today</div>`;
-                    currentChatDate = date;
-                }
-                
-                box.innerHTML += `
-                    <div class="message-group my-message">
-                        <div class="msg sent">${text}</div>
-                        <span class="timestamp-out">${time} <span class="read-ticks ticks-sent">${checkmarkSVG}</span></span>
-                    </div>`;
-                box.scrollTop = box.scrollHeight;
-
-                // Send the date to the server!
-                socket.emit('send_message', { from: myName, to: currentRecipient, msg: text, time: time, date: date });
-                input.value = "";
-                
-                clearTimeout(typingTimeout);
-                socket.emit('stop_typing', { to: currentRecipient });
-            } else if (currentRecipient === "") {
-                alert("Please click a user in the sidebar to start chatting!");
-            }
-        }
-
-        socket.on('receive_message', function(data) {
-            let box = document.getElementById('chat-box');
-            let time = data.timestamp || getTimeString(); 
-            let date = data.date || getDateString();
-            let myName = document.getElementById('myName').value.trim();
-            
-            if (data.type === 'system') {
-                box.innerHTML += `<div class="system-notification">${data.msg} • ${time}</div>`;
-            } else {
-                if (data.sender === currentRecipient) {
-                    // NEW: If they send a message and the date changed
-                    if (date !== currentChatDate) {
-                        let displayDate = (date === getDateString()) ? "Today" : date;
-                        box.innerHTML += `<div class="date-divider">${displayDate}</div>`;
-                        currentChatDate = date;
-                    }
-
-                    box.innerHTML += `
-                        <div class="message-group their-message">
-                            <div class="msg received">${data.msg}</div>
-                            <span class="timestamp-out">${time}</span>
-                        </div>`;
-                    box.scrollTop = box.scrollHeight;
-                    
-                    socket.emit('mark_read', { sender: data.sender, recipient: myName });
-                }
-            }
-        });
-
-        socket.on('messages_read', function(data) {
-            if (data.reader === currentRecipient) {
-                let ticks = document.querySelectorAll('.ticks-sent');
-                ticks.forEach(tick => {
-                    tick.classList.remove('ticks-sent');
-                    tick.classList.add('ticks-read');
-                });
-            }
-        });
-
-        document.getElementById("messageInput").addEventListener("keyup", function(event) {
-            if (event.key === "Enter") {
-                sendMessage();
-            }
-        });
-
-        document.getElementById("messageInput").addEventListener("input", function() {
-            let myName = document.getElementById('myName').value.trim();
-            if(myName !== "" && currentRecipient !== "") {
-                socket.emit('typing', { from: myName, to: currentRecipient });
-                clearTimeout(typingTimeout);
-                typingTimeout = setTimeout(function() {
-                    socket.emit('stop_typing', { to: currentRecipient });
-                }, 10000);
-            }
-        });
-
-        socket.on('is_typing', function(data) {
-            let indicator = document.getElementById('typingIndicator');
-            indicator.innerText = `${data.sender} is typing...`;
-            indicator.style.display = "block";
-        });
-
-        socket.on('stopped_typing', function() {
-            let indicator = document.getElementById('typingIndicator');
-            indicator.style.display = "none";
-        });
-    </script>
+    <!-- JS modules (loaded in order) -->
+    <script src="{{ url_for('static', filename='js/state.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/users.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/messages.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/typing.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/emoji.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

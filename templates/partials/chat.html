@@ -1,0 +1,28 @@
+<main class="main-chat">
+    <header class="chat-header">
+        <div id="headerAvatar" class="avatar header-avatar" style="display: none;"></div>
+        <i class="fa-solid fa-at chat-header-at" id="headerAt"></i>
+        <h3 id="activeChatName" class="chat-header-name">Select a chat to start messaging</h3>
+    </header>
+
+    <div id="chat-box" class="chat-box">
+        <div class="welcome-state">
+            <div class="welcome-icon"><i class="fa-regular fa-comments"></i></div>
+            <h1 class="welcome-title">Welcome to Unicast</h1>
+            <p class="welcome-sub">Pick a friend on the left to start chatting.</p>
+        </div>
+    </div>
+
+    <div id="typingIndicator" class="typing-indicator"></div>
+
+    <div class="input-area">
+        <input type="text" id="messageInput" placeholder="Type a message…" />
+        <button id="emojiBtn" class="emoji-btn" type="button" title="Emoji">
+            <i class="fa-regular fa-face-smile"></i>
+        </button>
+        <button id="sendBtn" class="send-btn" type="button" title="Send">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+        <div id="emojiPanel" class="emoji-panel"></div>
+    </div>
+</main>

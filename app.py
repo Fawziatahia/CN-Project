@@ -1,8 +1,9 @@
 import sqlite3
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
+app.secret_key = 'unicast-dev-secret-key'
 socketio = SocketIO(app)
 
 routing_table = {}
@@ -10,7 +11,6 @@ routing_table = {}
 def init_db():
     conn = sqlite3.connect('chat.db')
     c = conn.cursor()
-    # NEW: Added 'date' column
     c.execute('''CREATE TABLE IF NOT EXISTS messages
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   sender TEXT,
@@ -39,8 +39,30 @@ def broadcast_users():
     socketio.emit('update_users', {'online': online_users, 'offline': offline_users})
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+def root():
+    if 'username' in session:
+        return redirect(url_for('chat'))
+    return redirect(url_for('login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        if username:
+            session['username'] = username
+            return redirect(url_for('chat'))
+    return render_template('login.html')
+
+@app.route('/chat')
+def chat():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template('index.html', username=session['username'])
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('login'))
 
 @socketio.on('register')
 def handle_register(username):
@@ -81,11 +103,10 @@ def handle_message(data):
     recipient = data.get('to')
     msg = data.get('msg')
     time = data.get('time')
-    date = data.get('date') # NEW: Grab the date from the frontend
+    date = data.get('date')
 
     conn = sqlite3.connect('chat.db')
     c = conn.cursor()
-    # NEW: Insert the date into the database
     c.execute("INSERT INTO messages (sender, recipient, message, timestamp, date, status) VALUES (?, ?, ?, ?, ?, 'sent')",
               (sender, recipient, msg, time, date))
     conn.commit()
@@ -93,7 +114,6 @@ def handle_message(data):
 
     if recipient in routing_table:
         recipient_sid = routing_table[recipient]
-        # NEW: Send the date along to the recipient
         emit('receive_message', {'msg': msg, 'type': 'chat', 'sender': sender, 'timestamp': time, 'date': date}, to=recipient_sid)
     else:
         emit('receive_message', {'msg': f'{recipient} is offline !', 'type': 'system'}, to=request.sid)
@@ -119,7 +139,6 @@ def handle_history(data):
 
     conn = sqlite3.connect('chat.db')
     c = conn.cursor()
-    # NEW: Fetch the date column (index 4)
     c.execute('''SELECT sender, message, timestamp, status, date FROM messages
                  WHERE (sender=? AND recipient=?) OR (sender=? AND recipient=?)
                  ORDER BY id ASC''', (user1, user2, user2, user1))
