@@ -1,46 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-<title>Unicast Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <title>Unicast Chat</title>
 </head>
 <body>
-<div class="chat-container">
-<div class="chat-header">
-<h3>Messaging Room</h3>
-</div>
-<!-- NEW: Routing Inputs -->
-<div style="padding: 10px; background: #fff; display: flex; gap: 10px; border-bottom: 1px solid #eee;">
-<input type="text" id="myName" placeholder="Your Name" onblur="registerUser()" style="border-radius: 5px; padding: 5px;">
-<input type="text" id="recipientName" placeholder="Send To..." style="border-radius: 5px; padding: 5px;">
-</div>
-
-<div id="chat-box" class="chat-box"></div>
-
-<!-- ADD THIS ONE LINE -->
-<div id="typingIndicator" style="display: none; padding: 0 20px 5px; font-size: 12px; color: #888; font-style: italic;"></div>
-
-<div class="input-area">
-<input type="text" id="messageInput" placeholder="Type a message...">
-<button onclick="sendMessage()">Send</button>
-</div>
-</div>
-<script>
-        const socket = io();
+    <div class="chat-container">
         
+        <!-- NEW: Left Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3>Chats & Users</h3>
+            </div>
+            <div id="userList" class="user-list">
+                <div class="user-item" style="justify-content: center; color: #888;">Waiting to connect...</div>
+            </div>
+        </div>
+
+        <!-- NEW: Right Chat Area -->
+        <div class="main-chat">
+            <div class="chat-header">
+                <h3>Messaging Room</h3>
+            </div>
+            
+            <div class="routing-bar">
+                <input type="text" id="myName" placeholder="Your Name" onblur="registerUser()">
+                <input type="text" id="recipientName" placeholder="Send To...">
+            </div>
+
+            <div id="chat-box" class="chat-box"></div>
+
+            <div id="typingIndicator" style="display: none; padding: 0 20px 5px; font-size: 12px; color: #888; font-style: italic; background: #fcfcfc;"></div>
+            
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Type a message...">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const socket = io();
         let typingTimeout = null;
 
-
-        // Helper function to get the time in 12-hour AM/PM format
         function getTimeString() {
             const now = new Date();
             let hours = now.getHours();
             let minutes = now.getMinutes();
             let ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
-            hours = hours ? hours : 12; // convert '0' to '12'
-            minutes = minutes < 10 ? '0' + minutes : minutes; // add leading zero
+            hours = hours ? hours : 12; 
+            minutes = minutes < 10 ? '0' + minutes : minutes; 
             return hours + ':' + minutes + ' ' + ampm;
         }
 
@@ -58,13 +70,12 @@
             
             if(text !== "" && recipient !== "") {
                 let box = document.getElementById('chat-box');
-                let time = getTimeString(); // Get the time
+                let time = getTimeString(); 
                 
-                // Add the timestamp div inside the bubble
                 box.innerHTML += `
-                    <div class="msg sent">
-                        ${text}
-                        <span class="timestamp">${time}</span>
+                    <div class="message-group my-message">
+                        <div class="msg sent">${text}</div>
+                        <span class="timestamp-out">${time}</span>
                     </div>`;
                 box.scrollTop = box.scrollHeight;
 
@@ -75,22 +86,45 @@
             }
         }
 
+        // --- NEW: Draw the sidebar users like WhatsApp ---
+        socket.on('update_users', function(data) {
+            let userListDiv = document.getElementById('userList');
+            userListDiv.innerHTML = ''; // Clear the old list
+            
+            if (data.users.length > 0) {
+                data.users.forEach(user => {
+                    // Get the first letter for the avatar
+                    let initial = user.charAt(0).toUpperCase();
+                    
+                    userListDiv.innerHTML += `
+                        <div class="user-item">
+                            <div class="avatar">${initial}</div>
+                            <div class="user-info">
+                                <div class="user-name">${user}</div>
+                                <div class="user-status">Online</div>
+                            </div>
+                            <span class="online-dot"></span>
+                        </div>`;
+                });
+            } else {
+                userListDiv.innerHTML = '<div class="user-item" style="justify-content: center; color: #888;">Just you</div>';
+            }
+        });
+
         socket.on('receive_message', function(data) {
             let box = document.getElementById('chat-box');
-            let time = getTimeString(); // Get the time
+            let time = getTimeString(); 
             
-            // NEW: Check if the message is a system notification
             if (data.type === 'system') {
                 box.innerHTML += `
                     <div class="system-notification">
                         ${data.msg} • ${time}
                     </div>`;
             } else {
-                // Draw a normal received chat bubble
                 box.innerHTML += `
-                    <div class="msg received">
-                        ${data.msg}
-                        <span class="timestamp">${time}</span>
+                    <div class="message-group their-message">
+                        <div class="msg received">${data.msg}</div>
+                        <span class="timestamp-out">${time}</span>
                     </div>`;
             }
             
@@ -103,46 +137,37 @@
             }
         });
 
-        // server when YOU are typing
         document.getElementById("messageInput").addEventListener("input", function() {
             let myName = document.getElementById('myName').value.trim();
             let recipient = document.getElementById('recipientName').value.trim();
             
             if(myName !== "" && recipient !== "") {
                 socket.emit('typing', { from: myName, to: recipient });
-                
-                // Clear the timer every time a key is pressed
- clearTimeout(typingTimeout);
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(function() {
+                    socket.emit('stop_typing', { to: recipient });
+                }, 10000);
+            }
+        });
 
-// If 10 seconds pass without a key press, tell the server we stopped
-typingTimeout = setTimeout(function() {
-socket.emit('stop_typing', { to: recipient });
-}, 10000);
-}
-});
+        const originalSendMessage = sendMessage;
+        sendMessage = function() {
+            originalSendMessage(); 
+            let recipient = document.getElementById('recipientName').value.trim();
+            clearTimeout(typingTimeout);
+            socket.emit('stop_typing', { to: recipient });
+        };
 
-// 2. Clear typing status immediately when you click Send
-const originalSendMessage = sendMessage;
-sendMessage = function() {
-originalSendMessage(); // Run your exact original send logic
-let recipient = document.getElementById('recipientName').value.trim();
-clearTimeout(typingTimeout);
-socket.emit('stop_typing', { to: recipient });
-};
+        socket.on('is_typing', function(data) {
+            let indicator = document.getElementById('typingIndicator');
+            indicator.innerText = `${data.sender} is typing...`;
+            indicator.style.display = "block";
+        });
 
-// 3. Listen for when THEY are typing
-socket.on('is_typing', function(data) {
-let indicator = document.getElementById('typingIndicator');
-indicator.innerText = `${data.sender} is typing...`;
-indicator.style.display = "block";
-});
-
- // 4. Listen for when THEY stop typing
-socket.on('stopped_typing', function() {
-let indicator = document.getElementById('typingIndicator');
-indicator.style.display = "none";
-});
-
-</script>
+        socket.on('stopped_typing', function() {
+            let indicator = document.getElementById('typingIndicator');
+            indicator.style.display = "none";
+        });
+    </script>
 </body>
 </html>
