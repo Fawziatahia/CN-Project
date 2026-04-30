@@ -4,21 +4,21 @@
 ============================================================ */
 
 :root {
-    /* Pastel palette */
-    --pastel-pink:     #ffd6e0;
-    --pastel-pink-2:   #ffafc7;
-    --pastel-lav:      #d6c8f5;
-    --pastel-lav-2:    #b8a3e0;
+    /* Pistachio palette (built from #B8D682) */
+    --pastel-pink:     #D4E6AB;   /* lighter green */
+    --pastel-pink-2:   #B8D682;   /* main green */
+    --pastel-lav:      #C8DF94;
+    --pastel-lav-2:    #8FB459;   /* deeper green for gradient end */
     --pastel-mint:     #c8f0d5;
     --pastel-mint-2:   #9ddfb5;
     --pastel-peach:    #ffd9b8;
-    --pastel-sky:      #cce4f5;
+    --pastel-sky:      #B8D682;
     --pastel-yellow:   #fff5c2;
 
     /* Accent */
-    --accent:          #b8a3e0;
-    --accent-strong:   #9d83d4;
-    --accent-pink:     #ff9eb5;
+    --accent:          #8FB459;
+    --accent-strong:   #6F9444;
+    --accent-pink:     #B8D682;
 
     /* Text on light pastel — high contrast */
     --text:            #2a1f4a;
@@ -32,7 +32,7 @@
     --glass-bg-input:     rgba(255, 255, 255, 0.85);
     --glass-border:       rgba(255, 255, 255, 0.95);
     --glass-border-soft:  rgba(255, 255, 255, 0.65);
-    --glass-shadow:       0 10px 40px rgba(141, 119, 173, 0.18);
+    --glass-shadow:       0 10px 40px rgba(111, 148, 68, 0.18);
 }
 
 * { box-sizing: border-box; }
@@ -48,7 +48,7 @@ html, body {
 body {
     font-family: 'Questrial', system-ui, -apple-system, Segoe UI, Tahoma, sans-serif;
     color: var(--text);
-    background: #ffafc7;
+    background: #B8D682;
     background-attachment: fixed;
     letter-spacing: 0.2px;
     -webkit-font-smoothing: antialiased;
@@ -123,7 +123,7 @@ body {
     font-size: 30px;
     color: #fff;
     background: linear-gradient(135deg, var(--pastel-pink-2), var(--pastel-lav-2));
-    box-shadow: 0 10px 26px rgba(184, 163, 224, 0.45);
+    box-shadow: 0 10px 26px rgba(143, 180, 89, 0.45);
 }
 
 .login-title {
@@ -131,12 +131,14 @@ body {
     font-size: 26px;
     font-weight: 400;
     color: var(--text);
+    font-family: 'Handlee', cursive;
 }
 
 .login-sub {
     margin: 0 0 26px;
     font-size: 14px;
     color: var(--text-muted);
+    font-family: 'Handlee', cursive;
 }
 
 .login-form {
@@ -170,7 +172,7 @@ body {
 .login-form input:focus {
     border-color: var(--pastel-lav-2);
     background: #e8e8ec;
-    box-shadow: 0 0 0 4px rgba(184, 163, 224, 0.22);
+    box-shadow: 0 0 0 4px rgba(143, 180, 89, 0.22);
 }
 
 .login-btn {
@@ -188,7 +190,7 @@ body {
     justify-content: center;
     gap: 8px;
     transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
-    box-shadow: 0 8px 22px rgba(184, 163, 224, 0.40);
+    box-shadow: 0 8px 22px rgba(143, 180, 89, 0.40);
 }
 .login-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
 .login-btn:active { transform: translateY(0); }
@@ -228,7 +230,7 @@ body {
     background: var(--glass-bg-soft);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border-right: 1px solid var(--glass-border-soft);
+    border-right: 1.5px solid rgba(0, 0, 0, 0.10);
 }
 
 .sidebar-header {
@@ -255,7 +257,7 @@ body {
     place-items: center;
     font-size: 16px;
     color: #fff;
-    box-shadow: 0 6px 16px rgba(184, 163, 224, 0.35);
+    box-shadow: 0 6px 16px rgba(143, 180, 89, 0.35);
 }
 
 .sidebar-section-header {
@@ -274,7 +276,7 @@ body {
 }
 
 .user-list::-webkit-scrollbar { width: 6px; }
-.user-list::-webkit-scrollbar-thumb { background: rgba(184, 163, 224, 0.35); border-radius: 3px; }
+.user-list::-webkit-scrollbar-thumb { background: rgba(143, 180, 89, 0.35); border-radius: 3px; }
 .user-list::-webkit-scrollbar-track { background: transparent; }
 
 .user-item {
@@ -294,8 +296,8 @@ body {
     border-color: var(--glass-border-soft);
 }
 .user-item.active {
-    background: linear-gradient(135deg, rgba(255, 175, 199, 0.30), rgba(184, 163, 224, 0.30));
-    border-color: rgba(184, 163, 224, 0.55);
+    background: linear-gradient(135deg, rgba(184, 214, 130, 0.45), rgba(143, 180, 89, 0.40));
+    border-color: rgba(111, 148, 68, 0.55);
 }
 .user-item.offline { color: var(--text-muted); }
 
@@ -325,7 +327,7 @@ body {
     justify-content: center;
     font-size: 15px;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(184, 163, 224, 0.30);
+    box-shadow: 0 4px 12px rgba(143, 180, 89, 0.30);
 }
 .avatar-sm { width: 34px; height: 34px; font-size: 13px; }
 .user-item.offline .avatar { filter: grayscale(0.3) brightness(0.95); }
@@ -435,7 +437,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    border-bottom: 1px solid var(--glass-border-soft);
+    border-bottom: 1.5px solid rgba(0, 0, 0, 0.10);
     background: rgba(255, 255, 255, 0.65);
 }
 
@@ -474,7 +476,7 @@ body {
 }
 
 .chat-box::-webkit-scrollbar { width: 8px; }
-.chat-box::-webkit-scrollbar-thumb { background: rgba(184, 163, 224, 0.35); border-radius: 4px; }
+.chat-box::-webkit-scrollbar-thumb { background: rgba(143, 180, 89, 0.35); border-radius: 4px; }
 .chat-box::-webkit-scrollbar-track { background: transparent; }
 
 /* Welcome state */
@@ -495,7 +497,7 @@ body {
     color: #fff;
     background: linear-gradient(135deg, var(--pastel-pink-2), var(--pastel-lav-2));
     border: 1px solid var(--glass-border);
-    box-shadow: 0 12px 30px rgba(184, 163, 224, 0.35);
+    box-shadow: 0 12px 30px rgba(143, 180, 89, 0.35);
 }
 .welcome-title {
     margin: 0 0 6px;
@@ -507,6 +509,17 @@ body {
     margin: 0;
     font-size: 14px;
     color: var(--text-faint);
+}
+.welcome-arrow {
+    margin-top: 16px;
+    font-size: 24px;
+    color: var(--accent);
+    animation: arrowPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes arrowPulse {
+    0%, 100% { transform: translateX(0); opacity: 0.6; }
+    50% { transform: translateX(-12px); opacity: 1; }
 }
 
 /* Message groups */
@@ -539,11 +552,11 @@ body {
 }
 
 .sent {
-    background: linear-gradient(135deg, rgba(255, 175, 199, 0.95), rgba(214, 200, 245, 0.95));
-    color: #1a1230;
+    background: linear-gradient(135deg, rgba(184, 214, 130, 0.95), rgba(143, 180, 89, 0.95));
+    color: #1a2410;
     border-radius: 18px 18px 4px 18px;
     border-color: rgba(255, 255, 255, 0.75);
-    box-shadow: 0 6px 18px rgba(184, 163, 224, 0.30);
+    box-shadow: 0 6px 18px rgba(111, 148, 68, 0.35);
 }
 
 .received {
@@ -585,7 +598,7 @@ body {
     content: "";
     flex: 1;
     height: 1px;
-    background: rgba(184, 163, 224, 0.30);
+    background: rgba(143, 180, 89, 0.30);
 }
 .date-divider span { padding: 0 12px; }
 
@@ -627,7 +640,7 @@ body {
     display: flex;
     gap: 10px;
     align-items: center;
-    border-top: 1px solid var(--glass-border-soft);
+    border-top: 1.5px solid rgba(0, 0, 0, 0.10);
     background: rgba(255, 255, 255, 0.65);
 }
 
@@ -647,7 +660,7 @@ body {
 .input-area input:focus {
     border-color: var(--pastel-lav-2);
     background: #e8e8ec;
-    box-shadow: 0 0 0 4px rgba(184, 163, 224, 0.22);
+    box-shadow: 0 0 0 4px rgba(143, 180, 89, 0.22);
 }
 
 .send-btn {
@@ -663,7 +676,7 @@ body {
     align-items: center;
     justify-content: center;
     transition: transform 0.12s, filter 0.12s, box-shadow 0.12s;
-    box-shadow: 0 8px 22px rgba(184, 163, 224, 0.40);
+    box-shadow: 0 8px 22px rgba(143, 180, 89, 0.40);
 }
 .send-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
 .send-btn:active { transform: translateY(0); }
@@ -726,7 +739,7 @@ body {
     border-radius: 18px;
     backdrop-filter: blur(28px) saturate(180%);
     -webkit-backdrop-filter: blur(28px) saturate(180%);
-    box-shadow: 0 16px 40px rgba(141, 119, 173, 0.30);
+    box-shadow: 0 16px 40px rgba(111, 148, 68, 0.30);
     padding: 12px;
     overflow-y: auto;
     display: none;
@@ -740,7 +753,7 @@ body {
 }
 
 .emoji-panel::-webkit-scrollbar { width: 6px; }
-.emoji-panel::-webkit-scrollbar-thumb { background: rgba(184, 163, 224, 0.35); border-radius: 3px; }
+.emoji-panel::-webkit-scrollbar-thumb { background: rgba(143, 180, 89, 0.35); border-radius: 3px; }
 .emoji-panel::-webkit-scrollbar-track { background: transparent; }
 
 .emoji-cell {
@@ -754,7 +767,7 @@ body {
     transition: background 0.12s, transform 0.12s;
 }
 .emoji-cell:hover {
-    background: rgba(184, 163, 224, 0.30);
+    background: rgba(143, 180, 89, 0.30);
     transform: scale(1.18);
 }
 
