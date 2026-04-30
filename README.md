@@ -1,4 +1,4 @@
-# Unicast
+# TalkNest
 
 A real-time one-to-one chat app built with **Flask** + **Flask-SocketIO** + **SQLite**, featuring a fullscreen pastel glassmorphic frontend.
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sign in · Unicast</title>
+    <title>Sign in · TalkNest</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,7 +26,7 @@
             <div class="login-logo">
                 <i class="fa-solid fa-comment-dots"></i>
             </div>
-            <h1 class="login-title">Welcome to Unicast</h1>
+            <h1 class="login-title">Welcome to TalkNest</h1>
             <p class="login-sub">Pick a name and start chatting — no signup, no passwords.</p>
 
             <form method="POST" action="{{ url_for('login') }}" class="login-form" autocomplete="off">
@@ -46,8 +46,120 @@
                 </button>
             </form>
 
-            <p class="login-footnote">By continuing you agree to be friendly. ✿</p>
+            <div class="why-section">
+                <h2 class="why-title">Why TalkNest?</h2>
+                <ul class="why-list">
+                    <li>
+                        <i class="fa-solid fa-bolt"></i>
+                        <div>
+                            <strong>Instant, no friction</strong>
+                            <span>No email, no password, no verification. Just pick a name and you're in.</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fa-solid fa-comments"></i>
+                        <div>
+                            <strong>Real-time chat</strong>
+                            <span>One-to-one messaging over WebSockets with typing indicators and read receipts.</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fa-solid fa-user-shield"></i>
+                        <div>
+                            <strong>Lightweight &amp; private</strong>
+                            <span>We don't track you, don't run ads, and don't sell your data — ever.</span>
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <div>
+                            <strong>Stays with you</strong>
+                            <span>Chat history is saved so you can pick conversations back up any time.</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <p class="login-footnote">
+                By continuing you agree to be friendly. ✿
+                <br />
+                <a href="#" class="policy-link" id="openPolicy">Privacy Policy</a>
+            </p>
         </div>
     </div>
+
+    <div class="policy-overlay" id="policyOverlay" aria-hidden="true">
+        <div class="policy-modal glass" role="dialog" aria-modal="true" aria-labelledby="policyTitle">
+            <button class="policy-close" id="closePolicy" type="button" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 id="policyTitle" class="policy-title">Privacy Policy</h2>
+            <p class="policy-meta">Last updated: April 30, 2026</p>
+
+            <div class="policy-body">
+                <p>TalkNest is a lightweight chat app designed to be simple and respectful of your privacy. This page explains what we collect, why we collect it, and what we don't do.</p>
+
+                <h3>What we collect</h3>
+                <ul>
+                    <li><strong>Display name</strong> — the name you choose to chat under. This is the only identifier we ask for.</li>
+                    <li><strong>Messages you send</strong> — stored so you and the recipient can see your chat history.</li>
+                    <li><strong>Connection state</strong> — whether you're online, offline, or typing, so the other person sees accurate status.</li>
+                </ul>
+
+                <h3>What we do <em>not</em> collect</h3>
+                <ul>
+                    <li>No email address, phone number, or password.</li>
+                    <li>No third-party tracking, advertising, or analytics cookies.</li>
+                    <li>No location data, contacts, or device identifiers.</li>
+                </ul>
+
+                <h3>How your data is used</h3>
+                <ul>
+                    <li>To deliver your messages to the person you're chatting with.</li>
+                    <li>To show online presence, typing indicators, and read receipts.</li>
+                    <li>To keep your chat history available when you log back in.</li>
+                </ul>
+
+                <h3>How your data is stored</h3>
+                <p>Messages and display names are stored in a local SQLite database on the server running TalkNest. Data is not shared with third parties.</p>
+
+                <h3>Your choices</h3>
+                <ul>
+                    <li>You can stop using TalkNest at any time — just close the tab.</li>
+                    <li>If you're running your own TalkNest instance, you control the database and can delete it whenever you want.</li>
+                </ul>
+
+                <h3>Contact</h3>
+                <p>Questions or concerns? Reach out to the maintainer of the TalkNest instance you're using.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var overlay = document.getElementById('policyOverlay');
+            var openBtn = document.getElementById('openPolicy');
+            var closeBtn = document.getElementById('closePolicy');
+
+            function open(e) {
+                if (e) e.preventDefault();
+                overlay.classList.add('open');
+                overlay.setAttribute('aria-hidden', 'false');
+            }
+            function close() {
+                overlay.classList.remove('open');
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+
+            openBtn.addEventListener('click', open);
+            closeBtn.addEventListener('click', close);
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) close();
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') close();
+            });
+        })();
+    </script>
 </body>
 </html>

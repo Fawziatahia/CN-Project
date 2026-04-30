@@ -55,7 +55,7 @@ function closeChat() {
     document.getElementById('chat-box').innerHTML = `
         <div class="welcome-state">
             <div class="welcome-icon"><i class="fa-regular fa-comments"></i></div>
-            <h1 class="welcome-title">Welcome to Unicast</h1>
+            <h1 class="welcome-title">Welcome to TalkNest</h1>
             <p class="welcome-sub">Choose someone from the left panel to begin.</p>
             <div class="welcome-arrow">
                 <i class="fa-solid fa-arrow-left"></i>

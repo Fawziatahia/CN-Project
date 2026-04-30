@@ -1,5 +1,5 @@
 /* ============================================================
-   Unicast — pastel glassmorphism
+   TalkNest — pastel glassmorphism
    Font: Questrial (Google Fonts)
 ============================================================ */
 
@@ -94,11 +94,15 @@ body {
 /* ============================================================
    LOGIN PAGE
 ============================================================ */
+body.login-body {
+    overflow-y: auto;
+}
+
 .login-page {
     position: relative;
     z-index: 1;
     width: 100vw;
-    height: 100vh;
+    min-height: 100vh;
     display: grid;
     place-items: center;
     padding: 24px;
@@ -199,6 +203,210 @@ body {
     margin: 22px 0 0;
     font-size: 12px;
     color: var(--text-faint);
+}
+
+.policy-link {
+    display: inline-block;
+    margin-top: 6px;
+    color: var(--accent-strong);
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 1px dashed rgba(111, 148, 68, 0.5);
+    padding-bottom: 1px;
+    transition: color 0.15s, border-color 0.15s;
+}
+.policy-link:hover {
+    color: var(--text-strong);
+    border-bottom-color: var(--text-strong);
+}
+
+/* ============================================================
+   Why TalkNest? section
+============================================================ */
+.why-section {
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(143, 180, 89, 0.25);
+    text-align: left;
+}
+
+.why-title {
+    margin: 0 0 14px;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text-strong);
+    font-family: 'Handlee', cursive;
+    text-align: center;
+    letter-spacing: 0.3px;
+}
+
+.why-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+}
+
+.why-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    transition: background 0.15s, transform 0.15s;
+}
+.why-list li:hover {
+    background: rgba(255, 255, 255, 0.65);
+    transform: translateY(-1px);
+}
+
+.why-list li > i {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--pastel-pink-2), var(--pastel-lav-2));
+    box-shadow: 0 4px 10px rgba(143, 180, 89, 0.35);
+}
+
+.why-list li > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.why-list li strong {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-strong);
+    letter-spacing: 0.2px;
+}
+
+.why-list li span {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+/* ============================================================
+   Privacy Policy modal
+============================================================ */
+.policy-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(42, 31, 74, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+}
+.policy-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.policy-modal {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    max-height: 86vh;
+    overflow-y: auto;
+    border-radius: 24px;
+    padding: 32px 32px 28px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.25s cubic-bezier(.2, .8, .2, 1);
+}
+.policy-overlay.open .policy-modal {
+    transform: translateY(0) scale(1);
+}
+
+.policy-modal::-webkit-scrollbar { width: 8px; }
+.policy-modal::-webkit-scrollbar-thumb {
+    background: rgba(143, 180, 89, 0.45);
+    border-radius: 4px;
+}
+.policy-modal::-webkit-scrollbar-track { background: transparent; }
+
+.policy-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    display: grid;
+    place-items: center;
+    transition: background 0.15s, color 0.15s, transform 0.12s;
+}
+.policy-close:hover {
+    background: #fff;
+    color: var(--text-strong);
+    transform: rotate(90deg);
+}
+
+.policy-title {
+    margin: 0 0 4px;
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--text-strong);
+    font-family: 'Handlee', cursive;
+}
+
+.policy-meta {
+    margin: 0 0 18px;
+    font-size: 12px;
+    color: var(--text-faint);
+    letter-spacing: 0.4px;
+}
+
+.policy-body {
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.policy-body h3 {
+    margin: 18px 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-strong);
+    letter-spacing: 0.3px;
+}
+
+.policy-body p {
+    margin: 0 0 10px;
+    color: var(--text-muted);
+}
+
+.policy-body ul {
+    margin: 0 0 10px;
+    padding-left: 20px;
+    color: var(--text-muted);
+}
+
+.policy-body li {
+    margin-bottom: 6px;
+}
+
+.policy-body strong {
+    color: var(--text-strong);
 }
 
 @keyframes cardIn {

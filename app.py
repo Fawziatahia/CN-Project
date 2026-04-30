@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
-app.secret_key = 'unicast-dev-secret-key'
+app.secret_key = 'talknest-dev-secret-key'
 socketio = SocketIO(app)
 
 routing_table = {}
