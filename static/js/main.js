@@ -14,3 +14,15 @@ const initialName = getMyName();
 if (initialName) {
     App.socket.emit('register', initialName);
 }
+
+// Heartbeat — keeps presence updated in real-time
+let heartbeatInterval = null;
+if (initialName) {
+    heartbeatInterval = setInterval(() => {
+        App.socket.emit('heartbeat', { username: initialName });
+    }, 3000);
+}
+
+window.addEventListener('beforeunload', () => {
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+});

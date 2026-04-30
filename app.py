@@ -1,4 +1,6 @@
 import sqlite3
+import time
+import threading
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit
 
@@ -7,6 +9,9 @@ app.secret_key = 'unicast-dev-secret-key'
 socketio = SocketIO(app)
 
 routing_table = {}
+user_presence = {}
+cached_all_users = []
+cache_timestamp = 0
 
 def init_db():
     conn = sqlite3.connect('chat.db')
@@ -26,17 +31,38 @@ def init_db():
 
 init_db()
 
-def broadcast_users():
-    conn = sqlite3.connect('chat.db')
-    c = conn.cursor()
-    c.execute("SELECT username FROM users")
-    all_users = [row[0] for row in c.fetchall()]
-    conn.close()
+def get_all_users():
+    global cached_all_users, cache_timestamp
+    now = time.time()
+    if now - cache_timestamp > 5 or not cached_all_users:
+        conn = sqlite3.connect('chat.db')
+        c = conn.cursor()
+        c.execute("SELECT username FROM users")
+        cached_all_users = [row[0] for row in c.fetchall()]
+        conn.close()
+        cache_timestamp = now
+    return cached_all_users
 
+def broadcast_users():
+    all_users = get_all_users()
     online_users = list(routing_table.keys())
     offline_users = [u for u in all_users if u not in online_users]
 
     socketio.emit('update_users', {'online': online_users, 'offline': offline_users})
+
+def cleanup_stale_users():
+    now = time.time()
+    stale = [u for u, t in user_presence.items() if now - t > 10]
+    for username in stale:
+        if username in routing_table:
+            del routing_table[username]
+            del user_presence[username]
+            for known_user, known_sid in routing_table.items():
+                emit('receive_message', {'msg': f'{username} left the chat', 'type': 'system'}, to=known_sid)
+            broadcast_users()
+    threading.Timer(5, cleanup_stale_users).start()
+
+cleanup_stale_users()
 
 @app.route('/')
 def root():
@@ -67,12 +93,18 @@ def logout():
 @socketio.on('register')
 def handle_register(username):
     routing_table[username] = request.sid
+    user_presence[username] = time.time()
 
     conn = sqlite3.connect('chat.db')
     c = conn.cursor()
     c.execute("INSERT OR IGNORE INTO users (username) VALUES (?)", (username,))
     conn.commit()
     conn.close()
+
+    all_users = get_all_users()
+    online_users = list(routing_table.keys())
+    offline_users = [u for u in all_users if u not in online_users]
+    emit('update_users', {'online': online_users, 'offline': offline_users}, to=request.sid)
 
     emit('receive_message', {'msg': f'Welcome back, {username}!', 'type': 'system'}, to=request.sid)
 
@@ -82,6 +114,15 @@ def handle_register(username):
 
     broadcast_users()
 
+@socketio.on('heartbeat')
+def handle_heartbeat(data):
+    username = data.get('username')
+    if username:
+        user_presence[username] = time.time()
+        if username not in routing_table:
+            routing_table[username] = request.sid
+            broadcast_users()
+
 @socketio.on('disconnect')
 def handle_disconnect():
     disconnected_user = None
@@ -89,6 +130,8 @@ def handle_disconnect():
         if sid == request.sid:
             disconnected_user = username
             del routing_table[username]
+            if username in user_presence:
+                del user_presence[username]
             break
 
     if disconnected_user:
