@@ -147,6 +147,48 @@ def handle_history(data):
 
     emit('load_history', {'history': history}, to=request.sid)
 
+@socketio.on('delete_chat')
+def handle_delete_chat(data):
+    user1 = data.get('myName')
+    user2 = data.get('theirName')
+
+    conn = sqlite3.connect('chat.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM messages WHERE (sender=? AND recipient=?) OR (sender=? AND recipient=?)",
+              (user1, user2, user2, user1))
+    conn.commit()
+    conn.close()
+
+    emit('chat_deleted', {'success': True}, to=request.sid)
+
+@socketio.on('clear_unread')
+def handle_clear_unread(data):
+    sender = data.get('sender')
+    recipient = data.get('recipient')
+
+    conn = sqlite3.connect('chat.db')
+    c = conn.cursor()
+    c.execute("UPDATE messages SET status='read' WHERE sender=? AND recipient=? AND status='sent'", (sender, recipient))
+    conn.commit()
+    conn.close()
+
+    if sender in routing_table:
+        emit('unread_counts', {'counts': {recipient: 0}}, to=routing_table[sender])
+
+@socketio.on('get_unread_counts')
+def handle_unread_counts(data):
+    my_name = data.get('myName')
+
+    conn = sqlite3.connect('chat.db')
+    c = conn.cursor()
+    c.execute('''SELECT sender, COUNT(*) FROM messages
+                 WHERE recipient=? AND status='sent'
+                 GROUP BY sender''', (my_name,))
+    unread = {row[0]: row[1] for row in c.fetchall()}
+    conn.close()
+
+    emit('unread_counts', {'counts': unread}, to=request.sid)
+
 @socketio.on('typing')
 def handle_typing(data):
     recipient_name = data.get('to')
@@ -163,4 +205,5 @@ def handle_stop_typing(data):
         emit('stopped_typing', to=recipient_sid)
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)
+

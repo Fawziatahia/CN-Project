@@ -18,6 +18,7 @@ function openChat(userName) {
     headerAvatar.style.display = "flex";
     document.getElementById('headerAt').style.display = "inline-block";
     document.getElementById('activeChatName').innerText = userName;
+    document.getElementById('closeChatBtn').style.display = "inline-flex";
 
     document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
     const target = document.querySelector(`.user-item[data-username="${userName}"]`);
@@ -29,7 +30,54 @@ function openChat(userName) {
     const myName = getMyName();
     App.socket.emit('get_history', { me: myName, them: userName });
     App.socket.emit('mark_read', { sender: userName, recipient: myName });
+    App.socket.emit('clear_unread', { sender: userName, recipient: myName });
 }
+
+function closeChat() {
+    App.currentRecipient = "";
+    App.currentChatDate = "";
+
+    document.getElementById('headerAvatar').style.display = "none";
+    document.getElementById('headerAt').style.display = "none";
+    document.getElementById('activeChatName').innerText = "Pick a friend from the sidebar to start chatting";
+    document.getElementById('closeChatBtn').style.display = "none";
+
+    document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
+
+    document.getElementById('chat-box').innerHTML = `
+        <div class="welcome-state">
+            <div class="welcome-icon"><i class="fa-regular fa-comments"></i></div>
+            <h1 class="welcome-title">Welcome to Unicast</h1>
+            <p class="welcome-sub">Choose someone from the left panel to begin.</p>
+            <div class="welcome-arrow">
+                <i class="fa-solid fa-arrow-left"></i>
+            </div>
+        </div>`;
+}
+
+function deleteChat(userName) {
+    if (!confirm(`Delete all messages with ${userName}? This can't be undone.`)) return;
+
+    const myName = getMyName();
+    closeAllUserMenus();
+    App.socket.emit('delete_chat', { myName, theirName: userName });
+}
+
+function toggleUserMenu(event, userName) {
+    event.stopPropagation();
+    const menu = document.getElementById(`menu-${userName}`);
+    const isOpen = menu.style.display === 'block';
+    closeAllUserMenus();
+    if (!isOpen) {
+        menu.style.display = 'block';
+    }
+}
+
+function closeAllUserMenus() {
+    document.querySelectorAll('.user-menu-dropdown').forEach(m => m.style.display = 'none');
+}
+
+document.addEventListener('click', closeAllUserMenus);
 
 App.socket.on('update_users', function(data) {
     const userListDiv = document.getElementById('userList');
@@ -51,6 +99,15 @@ App.socket.on('update_users', function(data) {
                 <div class="user-info">
                     <div class="user-name">${user}</div>
                     <div class="user-status">${statusText}</div>
+                </div>
+                <span class="unread-badge" data-user="${user}" style="display:none;"></span>
+                <button class="user-menu-btn" title="More options" onclick="event.stopPropagation(); toggleUserMenu(event, '${user}')">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </button>
+                <div class="user-menu-dropdown" id="menu-${user}" style="display:none;">
+                    <button class="user-menu-item delete-option" onclick="event.stopPropagation(); deleteChat('${user}')">
+                        <i class="fa-solid fa-trash"></i> Delete chat
+                    </button>
                 </div>
             </div>`;
     };
@@ -76,5 +133,27 @@ App.socket.on('update_users', function(data) {
     if (App.currentRecipient) {
         const target = document.querySelector(`.user-item[data-username="${App.currentRecipient}"]`);
         if (target) target.classList.add('active');
+    }
+
+    App.socket.emit('get_unread_counts', { myName });
+});
+
+App.socket.on('unread_counts', function(data) {
+    document.querySelectorAll('.unread-badge').forEach(badge => {
+        const user = badge.getAttribute('data-user');
+        const count = data.counts[user] || 0;
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.style.display = 'inline-flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    });
+});
+
+App.socket.on('chat_deleted', function(data) {
+    if (data.success) {
+        closeChat();
+        App.socket.emit('get_unread_counts', { myName: getMyName() });
     }
 });

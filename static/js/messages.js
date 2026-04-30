@@ -15,9 +15,11 @@ function sendMessage() {
             App.currentChatDate = date;
         }
 
+        const isUrgent = text.includes('@') ? 'urgent' : '';
+
         box.innerHTML += `
             <div class="message-group my-message">
-                <div class="msg sent">${text}</div>
+                <div class="msg sent ${isUrgent}">${text}</div>
                 <span class="timestamp-out">${time} <span class="read-ticks ticks-sent">${App.checkmarkSVG}</span></span>
             </div>`;
         scrollChatToBottom();
@@ -55,17 +57,20 @@ App.socket.on('load_history', function(data) {
             App.currentChatDate = date;
         }
 
+        const isUrgent = msg.includes('@') ? 'urgent' : '';
+
         if (sender === myName) {
             const tickClass = status === 'read' ? 'ticks-read' : 'ticks-sent';
             box.innerHTML += `
                 <div class="message-group my-message">
-                    <div class="msg sent">${msg}</div>
+                    <div class="msg sent ${isUrgent}">${msg}</div>
                     <span class="timestamp-out">${time} <span class="read-ticks ${tickClass}">${App.checkmarkSVG}</span></span>
                 </div>`;
         } else {
+            const isUrgent = msg.includes('@') ? 'urgent' : '';
             box.innerHTML += `
                 <div class="message-group their-message">
-                    <div class="msg received">${msg}</div>
+                    <div class="msg received ${isUrgent}">${msg}</div>
                     <span class="timestamp-out">${time}</span>
                 </div>`;
         }
@@ -92,14 +97,23 @@ App.socket.on('receive_message', function(data) {
                 App.currentChatDate = date;
             }
 
+            const isUrgent = data.msg.includes('@') ? 'urgent' : '';
+
             box.innerHTML += `
                 <div class="message-group their-message">
-                    <div class="msg received">${data.msg}</div>
+                    <div class="msg received ${isUrgent}">${data.msg}</div>
                     <span class="timestamp-out">${time}</span>
                 </div>`;
             scrollChatToBottom();
 
             App.socket.emit('mark_read', { sender: data.sender, recipient: myName });
+        } else {
+            const badge = document.querySelector(`.unread-badge[data-user="${data.sender}"]`);
+            if (badge) {
+                const current = parseInt(badge.textContent) || 0;
+                badge.textContent = current + 1 > 99 ? '99+' : current + 1;
+                badge.style.display = 'inline-flex';
+            }
         }
     }
 });
