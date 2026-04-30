@@ -60,12 +60,91 @@
             let myName = document.getElementById('myName').value.trim();
             if(myName !== "") {
                 socket.emit('register', myName);
+                document.getElementById('myName').disabled = true; // Lock the name in
             }
         }
+
+        // --- NEW: Function to open a chat and request history ---
+        function openChat(userName) {
+            // Auto-fill the Send To box
+            document.getElementById('recipientName').value = userName;
+            
+            // Clear the current screen
+            document.getElementById('chat-box').innerHTML = `
+                <div class="system-notification">Loading secure chat with ${userName}...</div>
+            `;
+            
+            // Ask server for Unicast history
+            let myName = document.getElementById('myName').value.trim();
+            socket.emit('get_history', { me: myName, them: userName });
+        }
+
+        // --- NEW: Receive and draw the history ---
+        socket.on('load_history', function(data) {
+            let box = document.getElementById('chat-box');
+            box.innerHTML = ''; // Clear loading message
+            let myName = document.getElementById('myName').value.trim();
+
+            if (data.history.length === 0) {
+                box.innerHTML = `<div class="system-notification">This is the start of your chat history.</div>`;
+                return;
+            }
+
+            data.history.forEach(row => {
+                let sender = row[0];
+                let msg = row[1];
+                let time = row[2];
+
+                if (sender === myName) {
+                    box.innerHTML += `
+                        <div class="message-group my-message">
+                            <div class="msg sent">${msg}</div>
+                            <span class="timestamp-out">${time}</span>
+                        </div>`;
+                } else {
+                    box.innerHTML += `
+                        <div class="message-group their-message">
+                            <div class="msg received">${msg}</div>
+                            <span class="timestamp-out">${time}</span>
+                        </div>`;
+                }
+            });
+            box.scrollTop = box.scrollHeight;
+        });
+
+        // --- UPDATED: Make Sidebar users clickable ---
+        socket.on('update_users', function(data) {
+            let userListDiv = document.getElementById('userList');
+            userListDiv.innerHTML = ''; 
+            let myName = document.getElementById('myName').value.trim();
+            
+            if (data.users.length > 0) {
+                data.users.forEach(user => {
+                    if (user !== myName) { // Don't show ourselves in the click list
+                        let initial = user.charAt(0).toUpperCase();
+                        
+                        // Added onclick="openChat('${user}')"
+                        userListDiv.innerHTML += `
+                            <div class="user-item" onclick="openChat('${user}')" style="cursor: pointer;">
+                                <div class="avatar">${initial}</div>
+                                <div class="user-info">
+                                    <div class="user-name">${user}</div>
+                                    <div class="user-status">Online</div>
+                                </div>
+                                <span class="online-dot"></span>
+                            </div>`;
+                    }
+                });
+            }
+            if (userListDiv.innerHTML === '') {
+                userListDiv.innerHTML = '<div class="user-item" style="justify-content: center; color: #888;">Just you</div>';
+            }
+        });
 
         function sendMessage() {
             let input = document.getElementById('messageInput');
             let recipient = document.getElementById('recipientName').value.trim();
+            let myName = document.getElementById('myName').value.trim();
             let text = input.value.trim();
             
             if(text !== "" && recipient !== "") {
@@ -79,41 +158,18 @@
                     </div>`;
                 box.scrollTop = box.scrollHeight;
 
-                socket.emit('send_message', { msg: text, to: recipient });
+                // Send myName and time so the DB can save them
+                socket.emit('send_message', { from: myName, to: recipient, msg: text, time: time });
                 input.value = "";
-            } else if (recipient === "") {
-                alert("Please specify who you want to send this to!");
+            } else {
+                alert("Click a user in the sidebar to chat!");
             }
         }
 
-        // --- NEW: Draw the sidebar users like WhatsApp ---
-        socket.on('update_users', function(data) {
-            let userListDiv = document.getElementById('userList');
-            userListDiv.innerHTML = ''; // Clear the old list
-            
-            if (data.users.length > 0) {
-                data.users.forEach(user => {
-                    // Get the first letter for the avatar
-                    let initial = user.charAt(0).toUpperCase();
-                    
-                    userListDiv.innerHTML += `
-                        <div class="user-item">
-                            <div class="avatar">${initial}</div>
-                            <div class="user-info">
-                                <div class="user-name">${user}</div>
-                                <div class="user-status">Online</div>
-                            </div>
-                            <span class="online-dot"></span>
-                        </div>`;
-                });
-            } else {
-                userListDiv.innerHTML = '<div class="user-item" style="justify-content: center; color: #888;">Just you</div>';
-            }
-        });
-
         socket.on('receive_message', function(data) {
             let box = document.getElementById('chat-box');
-            let time = getTimeString(); 
+            let currentRecipient = document.getElementById('recipientName').value.trim();
+            let time = data.timestamp || getTimeString(); 
             
             if (data.type === 'system') {
                 box.innerHTML += `
@@ -127,7 +183,6 @@
                         <span class="timestamp-out">${time}</span>
                     </div>`;
             }
-            
             box.scrollTop = box.scrollHeight;
         });
 
