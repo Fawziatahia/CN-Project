@@ -7,21 +7,42 @@ socketio = SocketIO(app)
 
 routing_table = {}
 
-# ---Initialize Database ---
+# --- UPDATED: Initialize Database with a Users table ---
 def init_db():
-    # This creates a file called 'chat.db' in your folder
     conn = sqlite3.connect('chat.db')
     c = conn.cursor()
+    # Table for messages
     c.execute('''CREATE TABLE IF NOT EXISTS messages
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   sender TEXT,
                   recipient TEXT,
                   message TEXT,
                   timestamp TEXT)''')
+    # NEW: Table to remember everyone who has ever registered
+    c.execute('''CREATE TABLE IF NOT EXISTS users
+                 (username TEXT PRIMARY KEY)''')
     conn.commit()
     conn.close()
 
 init_db() 
+
+# --- NEW: Helper function to calculate Online vs Offline ---
+def broadcast_users():
+    # Get everyone who has EVER registered
+    conn = sqlite3.connect('chat.db')
+    c = conn.cursor()
+    c.execute("SELECT username FROM users")
+    all_users = [row[0] for row in c.fetchall()]
+    conn.close()
+
+    # Calculate who is online and who is offline
+    online_users = list(routing_table.keys())
+    offline_users = [u for u in all_users if u not in online_users]
+
+    # Send the sorted lists to everyone currently connected
+    for known_user, known_sid in routing_table.items():
+        emit('update_users', {'online': online_users, 'offline': offline_users}, to=known_sid)
+
 
 @app.route('/')
 def index():
@@ -32,14 +53,21 @@ def handle_register(username):
     routing_table[username] = request.sid
     print(f"Registered {username} at SID: {request.sid}")
 
-    emit('receive_message', {'msg': f'Welcome to the server, {username}!', 'type': 'system'}, to=request.sid)
+    # NEW: Save the user to the database permanently (ignores if they already exist)
+    conn = sqlite3.connect('chat.db')
+    c = conn.cursor()
+    c.execute("INSERT OR IGNORE INTO users (username) VALUES (?)", (username,))
+    conn.commit()
+    conn.close()
 
-    active_users = list(routing_table.keys())
+    emit('receive_message', {'msg': f'Welcome back to the server, {username}!', 'type': 'system'}, to=request.sid)
 
     for known_user, known_sid in routing_table.items():
         if known_sid != request.sid:
             emit('receive_message', {'msg': f'{username} joined the chat', 'type': 'system'}, to=known_sid)
-        emit('update_users', {'users': active_users}, to=known_sid)
+    
+    # Broadcast the new online/offline list
+    broadcast_users()
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -51,12 +79,12 @@ def handle_disconnect():
             break
             
     if disconnected_user:
-        active_users = list(routing_table.keys())
         for known_user, known_sid in routing_table.items():
             emit('receive_message', {'msg': f'{disconnected_user} left the chat', 'type': 'system'}, to=known_sid)
-            emit('update_users', {'users': active_users}, to=known_sid)
+        
+        # Broadcast the new online/offline list
+        broadcast_users()
 
-# --- Save to DB  ---
 @socketio.on('send_message')
 def handle_message(data):
     sender = data.get('from')
@@ -64,7 +92,6 @@ def handle_message(data):
     msg = data.get('msg')
     time = data.get('time')
     
-    # 1. Save to Database
     conn = sqlite3.connect('chat.db')
     c = conn.cursor()
     c.execute("INSERT INTO messages (sender, recipient, message, timestamp) VALUES (?, ?, ?, ?)",
@@ -72,21 +99,17 @@ def handle_message(data):
     conn.commit()
     conn.close()
     
-    # 2. Unicast to recipient if they are online
     if recipient in routing_table:
         recipient_sid = routing_table[recipient]
         emit('receive_message', {'msg': msg, 'type': 'chat', 'timestamp': time}, to=recipient_sid)
     else:
-        # If offline, the message is safely in the DB! Just tell the sender.
-        emit('receive_message', {'msg': f'{recipient} is offline !', 'type': 'system'}, to=request.sid)
+        emit('receive_message', {'msg': f'{recipient} is offline. Message safely saved to database!', 'type': 'system'}, to=request.sid)
 
-# ---Unicast Chat History ---
 @socketio.on('get_history')
 def handle_history(data):
     user1 = data.get('me')
     user2 = data.get('them')
 
-    # Ask the DB for any messages between these two specific people
     conn = sqlite3.connect('chat.db')
     c = conn.cursor()
     c.execute('''SELECT sender, message, timestamp FROM messages
@@ -95,7 +118,6 @@ def handle_history(data):
     history = c.fetchall()
     conn.close()
 
-    # Send this private history ONLY to the person who asked for it
     emit('load_history', {'history': history}, to=request.sid)
 
 @socketio.on('typing')

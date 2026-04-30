@@ -8,30 +8,25 @@
 <body>
     <div class="chat-container">
         
-        <!-- NEW: Left Sidebar -->
+        <!-- Left Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <h3>Chats & Users</h3>
+                <input type="text" id="myName" placeholder="Register your name..." onblur="registerUser()" class="register-input">
             </div>
             <div id="userList" class="user-list">
                 <div class="user-item" style="justify-content: center; color: #888;">Waiting to connect...</div>
             </div>
         </div>
 
-        <!-- NEW: Right Chat Area -->
+        <!-- Right Chat Area -->
         <div class="main-chat">
             <div class="chat-header">
-                <h3>Messaging Room</h3>
-            </div>
-            
-            <div class="routing-bar">
-                <input type="text" id="myName" placeholder="Your Name" onblur="registerUser()">
-                <input type="text" id="recipientName" placeholder="Send To...">
+                <h3 id="activeChatName">Select a chat to start messaging</h3>
             </div>
 
             <div id="chat-box" class="chat-box"></div>
 
-            <div id="typingIndicator" style="display: none; padding: 0 20px 5px; font-size: 12px; color: #888; font-style: italic; background: #fcfcfc;"></div>
+            <div id="typingIndicator" class="typing-indicator"></div>
             
             <div class="input-area">
                 <input type="text" id="messageInput" placeholder="Type a message...">
@@ -44,6 +39,7 @@
     <script>
         const socket = io();
         let typingTimeout = null;
+        let currentRecipient = "";
 
         function getTimeString() {
             const now = new Date();
@@ -60,29 +56,26 @@
             let myName = document.getElementById('myName').value.trim();
             if(myName !== "") {
                 socket.emit('register', myName);
-                document.getElementById('myName').disabled = true; // Lock the name in
+                document.getElementById('myName').disabled = true; 
+                document.getElementById('myName').style.backgroundColor = "#e9ecef";
             }
         }
 
-        // --- NEW: Function to open a chat and request history ---
         function openChat(userName) {
-            // Auto-fill the Send To box
-            document.getElementById('recipientName').value = userName;
+            currentRecipient = userName; 
+            document.getElementById('activeChatName').innerText = "Chatting with " + userName;
             
-            // Clear the current screen
             document.getElementById('chat-box').innerHTML = `
                 <div class="system-notification">Loading secure chat with ${userName}...</div>
             `;
             
-            // Ask server for Unicast history
             let myName = document.getElementById('myName').value.trim();
             socket.emit('get_history', { me: myName, them: userName });
         }
 
-        // --- NEW: Receive and draw the history ---
         socket.on('load_history', function(data) {
             let box = document.getElementById('chat-box');
-            box.innerHTML = ''; // Clear loading message
+            box.innerHTML = ''; 
             let myName = document.getElementById('myName').value.trim();
 
             if (data.history.length === 0) {
@@ -112,20 +105,21 @@
             box.scrollTop = box.scrollHeight;
         });
 
-        // --- UPDATED: Make Sidebar users clickable ---
+        // --- UPDATED: Draw Online AND Offline Users ---
         socket.on('update_users', function(data) {
             let userListDiv = document.getElementById('userList');
             userListDiv.innerHTML = ''; 
             let myName = document.getElementById('myName').value.trim();
+            let hasOtherUsers = false;
             
-            if (data.users.length > 0) {
-                data.users.forEach(user => {
-                    if (user !== myName) { // Don't show ourselves in the click list
+            // 1. Draw ONLINE users first
+            if (data.online.length > 0) {
+                data.online.forEach(user => {
+                    if (user !== myName) { 
+                        hasOtherUsers = true;
                         let initial = user.charAt(0).toUpperCase();
-                        
-                        // Added onclick="openChat('${user}')"
                         userListDiv.innerHTML += `
-                            <div class="user-item" onclick="openChat('${user}')" style="cursor: pointer;">
+                            <div class="user-item" onclick="openChat('${user}')">
                                 <div class="avatar">${initial}</div>
                                 <div class="user-info">
                                     <div class="user-name">${user}</div>
@@ -136,18 +130,37 @@
                     }
                 });
             }
-            if (userListDiv.innerHTML === '') {
-                userListDiv.innerHTML = '<div class="user-item" style="justify-content: center; color: #888;">Just you</div>';
+
+            // 2. Draw OFFLINE users below them
+            if (data.offline.length > 0) {
+                data.offline.forEach(user => {
+                    if (user !== myName) { 
+                        hasOtherUsers = true;
+                        let initial = user.charAt(0).toUpperCase();
+                        userListDiv.innerHTML += `
+                            <div class="user-item" onclick="openChat('${user}')" style="opacity: 0.6;">
+                                <div class="avatar" style="background: #aab8c2;">${initial}</div>
+                                <div class="user-info">
+                                    <div class="user-name">${user}</div>
+                                    <div class="user-status">Offline</div>
+                                </div>
+                            </div>`;
+                    }
+                });
+            }
+
+            // If you are the only person who has ever joined the server
+            if (!hasOtherUsers) {
+                userListDiv.innerHTML = '<div class="user-item" style="justify-content: center; color: #888;">Just you on the server</div>';
             }
         });
 
         function sendMessage() {
             let input = document.getElementById('messageInput');
-            let recipient = document.getElementById('recipientName').value.trim();
-            let myName = document.getElementById('myName').value.trim();
             let text = input.value.trim();
+            let myName = document.getElementById('myName').value.trim();
             
-            if(text !== "" && recipient !== "") {
+            if(text !== "" && currentRecipient !== "") {
                 let box = document.getElementById('chat-box');
                 let time = getTimeString(); 
                 
@@ -158,24 +171,23 @@
                     </div>`;
                 box.scrollTop = box.scrollHeight;
 
-                // Send myName and time so the DB can save them
-                socket.emit('send_message', { from: myName, to: recipient, msg: text, time: time });
+                socket.emit('send_message', { from: myName, to: currentRecipient, msg: text, time: time });
                 input.value = "";
-            } else {
-                alert("Click a user in the sidebar to chat!");
+                
+                clearTimeout(typingTimeout);
+                socket.emit('stop_typing', { to: currentRecipient });
+            } else if (currentRecipient === "") {
+                alert("Please click a user in the sidebar to start chatting!");
             }
         }
 
         socket.on('receive_message', function(data) {
             let box = document.getElementById('chat-box');
-            let currentRecipient = document.getElementById('recipientName').value.trim();
             let time = data.timestamp || getTimeString(); 
             
             if (data.type === 'system') {
                 box.innerHTML += `
-                    <div class="system-notification">
-                        ${data.msg} • ${time}
-                    </div>`;
+                    <div class="system-notification">${data.msg} • ${time}</div>`;
             } else {
                 box.innerHTML += `
                     <div class="message-group their-message">
@@ -194,24 +206,14 @@
 
         document.getElementById("messageInput").addEventListener("input", function() {
             let myName = document.getElementById('myName').value.trim();
-            let recipient = document.getElementById('recipientName').value.trim();
-            
-            if(myName !== "" && recipient !== "") {
-                socket.emit('typing', { from: myName, to: recipient });
+            if(myName !== "" && currentRecipient !== "") {
+                socket.emit('typing', { from: myName, to: currentRecipient });
                 clearTimeout(typingTimeout);
                 typingTimeout = setTimeout(function() {
-                    socket.emit('stop_typing', { to: recipient });
+                    socket.emit('stop_typing', { to: currentRecipient });
                 }, 10000);
             }
         });
-
-        const originalSendMessage = sendMessage;
-        sendMessage = function() {
-            originalSendMessage(); 
-            let recipient = document.getElementById('recipientName').value.trim();
-            clearTimeout(typingTimeout);
-            socket.emit('stop_typing', { to: recipient });
-        };
 
         socket.on('is_typing', function(data) {
             let indicator = document.getElementById('typingIndicator');
