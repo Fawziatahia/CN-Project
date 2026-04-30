@@ -365,10 +365,10 @@ body {
 .unread-badge {
     min-width: 20px;
     height: 20px;
-    padding: 0 5px;
+    padding: 0 6px;
     margin-right: 4px;
-    border-radius: 10px;
-    background: var(--accent);
+    border-radius: 50%;
+    background: #e55;
     color: #fff;
     font-size: 11px;
     font-weight: 600;
@@ -376,6 +376,7 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    line-height: 1;
 }
 
 .user-menu-btn {
@@ -757,6 +758,12 @@ body {
     color: #1a1230;
     transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
+.input-area input:disabled {
+    background: rgba(220, 220, 224, 0.5);
+    color: #9a9aa0;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
 .input-area input::placeholder { color: #6b6b75; }
 .input-area input:focus {
     border-color: var(--pastel-lav-2);
@@ -776,11 +783,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.12s, filter 0.12s, box-shadow 0.12s;
+    transition: transform 0.12s, filter 0.12s, box-shadow 0.12s, opacity 0.2s;
     box-shadow: 0 8px 22px rgba(143, 180, 89, 0.40);
 }
 .send-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
 .send-btn:active { transform: translateY(0); }
+.send-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    filter: none;
+}
 
 /* ============================================================
    Read receipts
@@ -835,6 +848,11 @@ body {
     transform: translateY(-1px);
 }
 .emoji-btn:active { transform: translateY(0); }
+.emoji-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
 
 .emoji-panel {
     position: absolute;

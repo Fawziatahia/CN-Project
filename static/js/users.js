@@ -31,6 +31,14 @@ function openChat(userName) {
     App.socket.emit('get_history', { me: myName, them: userName });
     App.socket.emit('mark_read', { sender: userName, recipient: myName });
     App.socket.emit('clear_unread', { sender: userName, recipient: myName });
+
+    const badge = document.querySelector(`.unread-badge[data-user="${userName}"]`);
+    if (badge) badge.style.display = 'none';
+
+    document.getElementById('messageInput').disabled = false;
+    document.getElementById('messageInput').placeholder = "Type a message…";
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('emojiBtn').disabled = false;
 }
 
 function closeChat() {
@@ -53,6 +61,14 @@ function closeChat() {
                 <i class="fa-solid fa-arrow-left"></i>
             </div>
         </div>`;
+
+    document.getElementById('messageInput').disabled = true;
+    document.getElementById('messageInput').placeholder = "Select a conversation to start typing…";
+    document.getElementById('sendBtn').disabled = true;
+    document.getElementById('emojiBtn').disabled = true;
+
+    const indicator = document.getElementById('typingIndicator');
+    indicator.style.display = "none";
 }
 
 function deleteChat(userName) {
@@ -143,7 +159,7 @@ App.socket.on('unread_counts', function(data) {
         const user = badge.getAttribute('data-user');
         const count = data.counts[user] || 0;
         if (count > 0) {
-            badge.textContent = count > 99 ? '99+' : count;
+            badge.textContent = count > 9 ? '9+' : count;
             badge.style.display = 'inline-flex';
         } else {
             badge.style.display = 'none';

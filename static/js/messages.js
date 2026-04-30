@@ -111,7 +111,8 @@ App.socket.on('receive_message', function(data) {
             const badge = document.querySelector(`.unread-badge[data-user="${data.sender}"]`);
             if (badge) {
                 const current = parseInt(badge.textContent) || 0;
-                badge.textContent = current + 1 > 99 ? '99+' : current + 1;
+                const next = current + 1;
+                badge.textContent = next > 9 ? '9+' : next;
                 badge.style.display = 'inline-flex';
             }
         }
