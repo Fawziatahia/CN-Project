@@ -30,11 +30,13 @@ body {
 
 .sidebar-header {
     background: #f0f2f5;
-    padding: 15px;
+    padding: 0 15px; /* Removed vertical padding so height controls it */
     border-bottom: 1px solid #e0e0e0;
     display: flex;
     align-items: center;
     justify-content: center;
+    height: 70px; /* Force exact height */
+    box-sizing: border-box;
 }
 
 .register-input {
@@ -112,9 +114,13 @@ body {
 .chat-header {
     background: #f0f2f5;
     color: #111b21;
-    padding: 15px 20px;
+    padding: 0 20px; /* Removed vertical padding so height controls it */
     border-bottom: 1px solid #e0e0e0;
     z-index: 10;
+    display: flex;
+    align-items: center; 
+    height: 70px; 
+    box-sizing: border-box;
 }
 
 .chat-header h3 {
@@ -123,7 +129,7 @@ body {
 }
 
 .chat-box {
-    background-image: url('bg.jpg'); 
+    background-image: url('bg.jpg'); /* Make sure your background image is here */
     background-size: cover;
     background-position: center;
     flex: 1;
@@ -151,7 +157,7 @@ body {
     padding: 0 12px;
 }
 
-/* YOUR ORIGINAL BUBBLE STYLES RESTORED */
+/* --- YOUR ORIGINAL BUBBLE STYLES --- */
 .msg {
     padding: 12px 18px;
     font-size: 15px;
@@ -234,3 +240,35 @@ body {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* --- UPDATED: Read Receipt Ticks (WhatsApp SVG) --- */
+.read-ticks {
+    margin-left: 3px;
+    display: inline-block;
+}
+
+.ticks-sent {
+    color: #8696a0; /* WhatsApp Grey */
+}
+
+.ticks-read {
+    color: #34B7F1; /* Vibrant WhatsApp Blue */
+}
+
+/* --- Date Divider Bubbles --- */
+.date-divider {
+    text-align: center;
+    font-size: 12px;
+    color: #54656f;
+    background-color: #ffffff;
+    padding: 6px 14px;
+    border-radius: 12px;
+    align-self: center;
+    margin: 15px auto;
+    width: fit-content;
+    box-shadow: 0 1px 1px rgba(11,20,26,.1);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
